@@ -49,7 +49,7 @@ func main() {
 		must(core.GetRootFS(containerName))
 
 		// 开启伪 tty，运行子进程，即 /proc/self/exe init ...args
-		ptmx := starWithPTY(cmd)
+		ptmx := startWithPTY(cmd)
 		defer ptmx.Close()
 
 		// 设置容器 CGroups 资源限制
@@ -86,7 +86,7 @@ func main() {
 		core.SetNamespaceIsolation(cmd)
 
 		// 开启伪 tty 执行 cmd
-		ptmx := starWithPTY(cmd)
+		ptmx := startWithPTY(cmd)
 		defer ptmx.Close()
 
 		cmd.Wait()
@@ -99,11 +99,10 @@ func main() {
 }
 
 func setCmdEnv(cmd *exec.Cmd) {
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "PS1=-[container]- # ")
+	cmd.Env = append(os.Environ(), "PS1=-[container]- # ")
 }
 
-func starWithPTY(cmd *exec.Cmd) *os.File {
+func startWithPTY(cmd *exec.Cmd) *os.File {
 	ptmx, err := pty.Start(cmd)
 	assertNoError(err)
 	go func() { _, _ = io.Copy(os.Stdout, ptmx) }()
